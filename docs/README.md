@@ -8,4 +8,6 @@
 
 ## 目录
 
-* [GoLang](/golang/README.md)
+* [GoLang](/golang/README)
+* [Clickhouse](/clickhouse/README)
+* [面试技巧](/interview/README)

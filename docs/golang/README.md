@@ -1,4 +1,4 @@
-# go菜鸟教程-学习笔记
+# golang学习笔记
 
 > [Go 语言教程](https://www.runoob.com/go/go-tutorial.html)
 >
