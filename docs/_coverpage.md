@@ -1,7 +1,7 @@
-<!-- 背景 -->
+![logo](_media/icon.jpg)
 
-<!--![](_media/bg.png)-->
+# Yaohao803的个人笔记
 
-<!-- 背景颜色 -->
 
-![color](#deded)
+[开始阅读](README.md)
+[我的GitHub](https://gitee.com/yaohao803/page)
