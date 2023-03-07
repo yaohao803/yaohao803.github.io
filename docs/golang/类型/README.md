@@ -152,29 +152,235 @@ const(
 
 
 
-- | 类型          | 长度 | 默认值 | 说明                             |
-  | ------------- | ---- | ------ | -------------------------------- |
-  | bool          | 1    | false  |                                  |
-  | byte          | 1    |        |                                  |
-  | int，uint     | 4，8 |        |                                  |
-  | int8，uint8   | 1    |        |                                  |
-  | int16，uint16 | 2    |        |                                  |
-  | int32，uint32 | 4    |        |                                  |
-  | int64，uint64 | 8    |        |                                  |
-  | float32       | 4    |        |                                  |
-  | float64       | 8    |        |                                  |
-  | complex64     | 8    |        |                                  |
-  | complex128    | 16   |        |                                  |
-  | rune          | 4    |        |                                  |
-  | uintptr       | 4，8 | 0      | 足以存储指针的uint               |
-  | string        |      | ""     | 字符串，默认为空字符串，而非null |
-  | array         |      |        | 数组                             |
-  | struct        |      |        | 结构体                           |
-  | function      |      | nil    | 函数                             |
-  | interface     |      | nil    | 接口                             |
-  | map           |      | nil    | 字典，引用类型                   |
-  | slice         |      | nil    | 切片，引用类型                   |
-  | channel       |      | nil    | 通道，引用类型                   |
+ | 类型          | 长度 | 默认值 | 说明                                   |
+  | ------------- | ---- | ------ | -------------------------------------- |
+  | bool          | 1    | false  |                                        |
+  | byte          | 1    | 0      | uint8                                  |
+  | int，uint     | 4，8 | 0      | 默认整数类型，依据目标平台，32位或64位 |
+  | int8，uint8   | 1    | 0      | -128~127，0-255                        |
+  | int16，uint16 | 2    | 0      | -32768~32767，0~65535                  |
+  | int32，uint32 | 4    | 0      | -21亿~21亿，0~42亿                     |
+  | int64，uint64 | 8    | 0      |                                        |
+  | float32       | 4    | 0.0    |                                        |
+  | float64       | 8    | 0.0    | 默认的浮点数类型                       |
+  | complex64     | 8    |        |                                        |
+  | complex128    | 16   |        |                                        |
+  | rune          | 4    | 0      | Unicode Code Point,int32               |
+  | uintptr       | 4，8 | 0      | 足以存储指针的uint                     |
+  | string        |      | ""     | 字符串，默认为空字符串，而非null       |
+  | array         |      |        | 数组                                   |
+  | struct        |      |        | 结构体                                 |
+  | function      |      | nil    | 函数                                   |
+  | interface     |      | nil    | 接口                                   |
+  | map           |      | nil    | 字典，引用类型                         |
+  | slice         |      | nil    | 切片，引用类型                         |
+  | channel       |      | nil    | 通道，引用类型                         |
+
+  
+
+> 支持八进制、十六进制以及科学计数法
+>
+> 八进制 ：0144
+>
+> 十六进制：0x64
+>
+> 其他转换可参考 [转换](https://cloud.tencent.com/developer/section/1144302)
+
+  
+
+```go
+package main
+
+import "strconv"
+
+func main() {
+	a, _ := strconv.ParseInt("000100", 2, 32) //2进制转int32
+	println(a)
+	b, _ := strconv.ParseInt("011", 8, 32) //8进制转int32
+	println(b)
+	c, _ := strconv.ParseInt("10", 16, 32) //16进制转int32
+	println(c)
+
+	println(strconv.FormatInt(a, 2))  //整数转二进制
+	println(strconv.FormatInt(a, 8))  //整数转8进制
+	println(strconv.FormatInt(a, 16)) //整数转16进制
+
+}
+
+
+4
+9
+16
+100
+4
+4
+```
+
+## 2.5.引用类型
+
+> reference type 指`slice、map、channel`这三种预定义类型，相比数字、数组等类型，引用类型拥有更复杂的存储结构，除内存分配外，还需要初始化一系列属性，如：指针、长度、甚至包括hash分布、数据队列等
+>
+> 内置函数`new`按照制定类型长度分配零值内存，返回指针，并不关心类型内部构造和初始化方式。而引用类型必须使用`make`函数创建，编译器会将make转化为目标类型专用的创建函数（或指令），以确保完成内部内存分配相关属性初始化
+>
+> new函数也可为引用类型分配内存，但这是不完整的创建。以字典（map）为例，它仅分配了字典类型本身（实际就是指针包装）所需内存，并没有分配键值存储内存，也没有初始化散列桶等内部参数，因此会无法工作
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	m := makemap()
+	for key := range m {
+		fmt.Println(key, "值:", m[key])
+	}
+
+	println("m['a']=", m["a"])
+	s := makeslice()
+	println("s[0]:=", s[0])
+	m = makemap2()
+	println("m['a']=", m["a"])
+}
+
+func makemap() map[string]int {
+	m := make(map[string]int)
+	m["a"] = 1
+	fmt.Printf("type: %T\n", m)
+	p := &m
+	fmt.Printf("type: %T\n", p)
+	c := *p
+	c["b"] = 2
+	return m
+}
+
+func makeslice() []int {
+	s := make([]int, 0, 10)
+	s = append(s, 100)
+	return s
+}
+
+func makemap2() map[string]int {
+	p := new(map[string]int)
+	fmt.Printf("type: %T\n", p)
+	m := *p
+	fmt.Printf("type: %T\n", m)
+	m["a"] = 1
+	return *p
+}
+
+type: map[string]int
+type: *map[string]int
+a 值: 1
+b 值: 2
+type: *map[string]int
+type: map[string]int
+m['a']= 1
+s[0]:= 100
+panic: assignment to entry in nil map
+
+
+```
+
+
+
+## 2.6.类型转换
+
+> 除常量、别名类型以及未命名类型外，go强制要求使用显示类型转换。加上不支持操作符重载，所以我们总是能确定语句及表达式的明确含义
+>
+> 如果转换目标是指针、单向通道或没有返回值的函数类型，那么必须使用括号，以避免造成语法分解错误
+
+```go
+func main(){
+    x:=100
+    p:=*int(&x) //x的指针地址为int型，这里会显示错误cannot convert &x (value of type *int) to type int,invalid indirect of int(&x) (type int)
+    println (p)
+}
+```
+
+```go
+//正确做法
+func main(){
+    x:=100
+    p:=(*int)(&x) 
+    println (p)
+}
+```
+
+2.7.自定义类型
+
+> 使用关键字type定义用户自定义类型，包括基于现有基础类型创建，或者是结构体、函数类型等。
+
+```go
+type flags byte
+
+const(
+	read flags =1 <<iota
+    write
+    exec
+)
+
+//自定义类型
+func test271() {
+	fmt.Printf("%b\n", read)
+	fmt.Printf("%b\n", write)
+	fmt.Printf("%b\n", exec)
+	f := read | exec
+	fmt.Printf("%b\n", f)
+}
+1
+10
+100
+101
+```
+
+> 和var，const类似，多个type定义可合并成组，可再函数或者代码块内定义局部类型
+
+```go
+type ( //组
+	user struct { //结构体类型
+		name string
+		age  uint8
+	}
+	event func(string) bool //函数类型
+)
+
+func test272() {
+	u := user{"yaohao", 40}
+	fmt.Println(u)
+	var f event = func(s string) bool {
+		println(s)
+		return s != ""
+	}
+	f("abc")
+}
+
+{yaohao 40}
+abc
+```
+
+> 即使制定了基础类型，也只表民他们有相同底层数据结构，两者间不存在任何关系，属完全不同的两种类型。除操作符外，自定义类型不会集成基础类型的其他信息和方法。不能视作别名，不隐式转换，不能直接用于比较表达式
+
+```go
+
+type data int
+
+func test273() {
+	var d data = 10
+	var e int = 10
+	println(d == e) //mismatched types data and int
+	var x int = d   //cannot use d (variable of type data) as type int in variable declaration
+	println(x)
+	println(d == x)
+}
+```
+
+
+
+> 
+
+## =====================临时  
+
+-----
 
   变量定义类型，再赋值
 
